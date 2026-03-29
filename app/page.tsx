@@ -1,48 +1,89 @@
 import React from 'react';
 
 const BLYNK_TOKEN = "pM0_GwoRXsJuSq8FARjyv5YEt1SuZW1D";
-const W_KEY = "38bdf8dafc29a88bfb153249f4dbcf29"; 
+const W_KEY = "38bdf8dafc29a88bfb153249f4dbcf29";
 
-export default async function Dashboard() {
-  const blynkRes = await fetch(`https://blynk.cloud/external/api/get?token=${BLYNK_TOKEN}&V6`, { next: { revalidate: 0 } });
-  const tomorrow = await blynkRes.text();
+export default async function EnviroHub() {
+  // Fetch Local AI Prediction from ESP32
+  const blynkRes = await fetch(
+    `https://blynk.cloud/external/api/get?token=${BLYNK_TOKEN}&V6`, 
+    { next: { revalidate: 0 } }
+  );
+  const rawBlynkData = await blynkRes.text();
+  
+  // Clean up Blynk errors and format the "Tomorrow" text
+  const predictionValue = (rawBlynkData.includes("error") || rawBlynkData.includes("pin")) 
+    ? "CALIBRATING" 
+    : rawBlynkData.toUpperCase();
 
-  const weatherRes = await fetch(`http://api.weatherstack.com/forecast?access_key=${W_KEY}&query=Matara`);
+  // Fetch Regional Data for Matara
+  const weatherRes = await fetch(
+    `http://api.weatherstack.com/forecast?access_key=${W_KEY}&query=Matara`,
+    { next: { revalidate: 3600 } }
+  );
   const data = await weatherRes.json();
-  const current = data && data.current ? data.current.weather_descriptions[0] : "Cloudy";
+  const hasData = data && data.current && data.forecast;
 
   return (
-    <div style={{ backgroundColor: '#070b14', color: 'white', height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', overflow: 'hidden', padding: '20px' }}>
+    <div style={{ backgroundColor: '#070b14', color: 'white', minHeight: '100vh', display: 'flex', flexDirection: 'column', padding: '40px 20px', overflowX: 'hidden' }}>
+      
+      {/* ABORIS STYLE HEADER */}
       <style>{`
         @font-face { font-family: 'Aboris'; src: url('https://fonts.cdnfonts.com/s/16218/Aboris.woff') format('woff'); }
-        @keyframes bgMove { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
-        .weather-card { animation: bgMove 10s linear infinite; background: linear-gradient(90deg, #1e293b, #334155, #1e293b); background-size: 200% 200%; }
+        @keyframes pulseBg { 0% { opacity: 0.3; } 50% { opacity: 0.6; } 100% { opacity: 0.3; } }
+        .bg-glow { position: absolute; width: 100%; height: 100%; top: 0; left: 0; background: radial-gradient(circle at 50% 50%, #1e293b 0%, transparent 70%); z-index: -1; animation: pulseBg 8s ease-in-out infinite; }
       `}</style>
+      
+      <div className="bg-glow" />
 
-      <h1 style={{ textAlign: 'center', color: '#38bdf8', fontSize: '1.4rem', fontFamily: 'Aboris, sans-serif', letterSpacing: '4px', marginBottom: '25px' }}>
-        ENVIRO WEATHER FORECAST
-      </h1>
+      <header style={{ textAlign: 'center', marginBottom: '50px' }}>
+        <h1 style={{ fontFamily: 'Aboris, sans-serif', color: '#38bdf8', fontSize: '1.8rem', letterSpacing: '4px', textTransform: 'uppercase' }}>
+          ENVIRO WEATHER MONITORING SYSTEM
+        </h1>
+      </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', maxWidth: '900px', margin: '0 auto', width: '100%' }}>
+      {/* MAIN DATA CARDS */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '25px', maxWidth: '1100px', margin: '0 auto', width: '100%' }}>
         
-        {/* TOMORROW PREDICTION */}
-        <div style={{ background: '#111827', padding: '30px', borderRadius: '20px', border: '2px solid #38bdf8', textAlign: 'center' }}>
-          <h2 style={{ fontSize: '0.7rem', color: '#94a3b8' }}>TOMORROW'S PREDICTION</h2>
-          <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#fbbf24', margin: '15px 0' }}>{tomorrow.toUpperCase()}</div>
-          <span style={{ fontSize: '0.6rem', padding: '4px 12px', background: '#1f2937', borderRadius: '10px' }}>HYBRID AI TREND</span>
+        {/* ESP32 PREDICTION */}
+        <div style={{ background: 'rgba(30, 41, 59, 0.4)', border: '2px solid #38bdf8', borderRadius: '24px', padding: '35px', textAlign: 'center', backdropFilter: 'blur(10px)' }}>
+          <p style={{ color: '#94a3b8', fontSize: '0.8rem', letterSpacing: '2px' }}>TOMORROW</p>
+          <div style={{ fontSize: '3.5rem', fontWeight: 'bold', color: '#fbbf24', margin: '20px 0' }}>
+            {predictionValue}
+          </div>
+          <span style={{ fontSize: '0.6rem', background: '#1e293b', padding: '5px 15px', borderRadius: '20px', color: '#38bdf8' }}>EDGE COMPUTING</span>
         </div>
 
-        {/* CURRENT REGIONAL ANIMATED */}
-        <div className="weather-card" style={{ padding: '30px', borderRadius: '20px', border: '1px solid #334155', textAlign: 'center' }}>
-          <h2 style={{ fontSize: '0.7rem', color: '#94a3b8' }}>CURRENTLY IN MATARA</h2>
-          <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#60a5fa', margin: '15px 0' }}>{current.toUpperCase()}</div>
-          <span style={{ fontSize: '0.6rem', padding: '4px 12px', background: '#0f172a', borderRadius: '10px' }}>SATELLITE DATA</span>
+        {/* REGIONAL SATELLITE */}
+        <div style={{ background: 'rgba(30, 41, 59, 0.4)', borderRadius: '24px', padding: '35px', textAlign: 'center', border: '1px solid #334155' }}>
+          <p style={{ color: '#94a3b8', fontSize: '0.8rem', letterSpacing: '2px' }}>MATARA REGIONAL</p>
+          <div style={{ fontSize: '3.5rem', fontWeight: 'bold', color: '#60a5fa', margin: '20px 0' }}>
+            {hasData ? data.current.weather_descriptions[0].toUpperCase() : "SYNCING..."}
+          </div>
+          <span style={{ fontSize: '0.6rem', background: '#0f172a', padding: '5px 15px', borderRadius: '20px' }}>API SYNC</span>
+        </div>
+
+      </div>
+
+      {/* 5-DAY PREDICTIVE OUTLOOK */}
+      <div style={{ maxWidth: '1100px', margin: '40px auto', width: '100%', background: 'rgba(15, 23, 42, 0.6)', borderRadius: '24px', padding: '30px', border: '1px solid #1e293b' }}>
+        <p style={{ color: '#38bdf8', fontSize: '0.7rem', textTransform: 'uppercase', marginBottom: '30px', letterSpacing: '1px' }}>
+          5-Day Predictive Outlook
+        </p>
+        
+        <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '15px' }}>
+          {hasData ? Object.values(data.forecast).slice(0, 5).map((day: any, i) => (
+            <div key={i} style={{ textAlign: 'center', flex: '1', minWidth: '120px', padding: '15px', borderRadius: '15px', background: '#111827' }}>
+              <p style={{ color: '#94a3b8', fontSize: '0.7rem', marginBottom: '10px' }}>{day.date.split('-').slice(1).join('/')}</p>
+              <p style={{ fontSize: '1.8rem', fontWeight: 'bold', margin: '5px 0' }}>{day.maxtemp}°</p>
+              <p style={{ fontSize: '0.7rem', color: '#fbbf24' }}>{day.mintemp}° L</p>
+            </div>
+          )) : (
+            <p style={{ width: '100%', textAlign: 'center', opacity: 0.5 }}>Loading regional trends...</p>
+          )}
         </div>
       </div>
 
-      <div style={{ marginTop: '40px', background: '#111827', padding: '20px', borderRadius: '20px', border: '1px solid #1f2937', maxWidth: '900px', margin: '40px auto 0', width: '100%' }}>
-         <p style={{ textAlign: 'center', fontSize: '0.7rem', color: '#38bdf8', textTransform: 'uppercase' }}>5-Day Regional Outlook System Active</p>
-      </div>
     </div>
   );
 }
