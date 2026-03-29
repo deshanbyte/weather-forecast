@@ -4,7 +4,6 @@ const BLYNK_TOKEN = "pM0_GwoRXsJuSq8FARjyv5YEt1SuZW1D";
 const W_KEY = "38bdf8dafc29a88bfb153249f4dbcf29";
 
 export default async function WeatherHub() {
-  // 1. Fetch Live ESP32 Sensor Data
   const pins = ['V0','V1','V2','V5'];
   const blynkData: any = {};
   
@@ -15,7 +14,6 @@ export default async function WeatherHub() {
     } catch (e) { blynkData[pin] = "--"; }
   }));
 
-  // 2. Fetch Regional Satellite Forecast
   let weatherData;
   try {
     const res = await fetch(`http://api.weatherstack.com/forecast?access_key=${W_KEY}&query=Matara`, { next: { revalidate: 3600 } });
@@ -24,81 +22,89 @@ export default async function WeatherHub() {
 
   const hasWeather = weatherData && weatherData.current && weatherData.forecast;
   const tomorrowData = hasWeather ? Object.values(weatherData.forecast)[1] as any : null;
-  const nextFourDays = hasWeather ? Object.values(weatherData.forecast).slice(2, 6) : [];
+  const nextFiveDays = hasWeather ? Object.values(weatherData.forecast).slice(1, 6) : [];
 
-  // Professional Static Weather Icons
   const getIcon = (desc: string) => {
     const d = desc?.toLowerCase() || "";
     if (d.includes("rain")) return "https://cdn-icons-png.flaticon.com/512/1163/1163657.png";
     if (d.includes("cloud") || d.includes("overcast")) return "https://cdn-icons-png.flaticon.com/512/4834/4834559.png";
-    return "https://cdn-icons-png.flaticon.com/512/869/869869.png"; // Sun/Clear
+    return "https://cdn-icons-png.flaticon.com/512/869/869869.png";
   };
 
   return (
     <div style={{ 
-      backgroundColor: '#05070a', color: '#e2e8f0', height: '100vh', 
-      display: 'flex', flexDirection: 'column', padding: '15px', 
-      fontFamily: 'Inter, system-ui, -apple-system, sans-serif', overflow: 'hidden', boxSizing: 'border-box' 
+      backgroundColor: '#0f1115', color: '#ffffff', height: '100vh', 
+      display: 'flex', flexDirection: 'column', padding: '20px', 
+      fontFamily: '"Inter", sans-serif', overflow: 'hidden', boxSizing: 'border-box' 
     }}>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
         @font-face { font-family: 'Aboris'; src: url('https://fonts.cdnfonts.com/s/16218/Aboris.woff') format('woff'); }
-        .glass-card { background: rgba(22, 30, 49, 0.6); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05); display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .label { font-size: 0.6rem; color: #64748b; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 4px; }
-        .brand-title { font-family: 'Aboris'; color: #38bdf8; letter-spacing: 4px; font-size: 1.1rem; text-shadow: 0 0 10px rgba(56, 189, 248, 0.2); }
-        .data-value { font-size: 1.2rem; font-weight: 700; color: #f8fafc; }
+        .glass { background: rgba(25, 28, 35, 0.7); border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); }
+        .stat-card { padding: 15px; display: flex; flex-direction: column; justify-content: center; }
+        .label { font-size: 0.7rem; color: #71717a; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .value { font-size: 1.4rem; font-weight: 800; margin-top: 4px; }
+        .glow-blue { color: #38bdf8; text-shadow: 0 0 20px rgba(56, 189, 248, 0.3); }
       `}</style>
 
       {/* HEADER */}
-      <header style={{ textAlign: 'center', height: '8vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <h1 className="brand-title">ENVIRO MONITORING SYSTEM</h1>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '8vh', marginBottom: '10px' }}>
+        <h1 style={{ fontFamily: 'Aboris', fontSize: '1.2rem', letterSpacing: '3px' }} className="glow-blue">ENVIRO HUB</h1>
+        <div style={{ fontSize: '0.8rem', color: '#71717a' }}>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</div>
       </header>
 
-      {/* TOP: SENSOR GRID */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', height: '12vh', marginBottom: '10px' }}>
-        {[ {l:'Temp', v:blynkData.V0+'°'}, {l:'Hum', v:blynkData.V1+'%'}, {l:'Pres', v:Math.round(blynkData.V2)}, {l:'Air Q', v:blynkData.V5, c:'#10b981'} ].map((s, i) => (
-          <div key={i} className="glass-card">
-            <span className="label">{s.l}</span>
-            <span className="data-value" style={{ color: s.c }}>{s.v}</span>
+      {/* TOP: MAIN WEATHER DISPLAY (Weighted Left) */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.6fr', gap: '20px', height: '35vh', marginBottom: '20px' }}>
+        <div className="glass" style={{ padding: '30px', display: 'flex', alignItems: 'center', gap: '40px', background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(25, 28, 35, 0.7) 100%)' }}>
+          <img src={getIcon(hasWeather ? weatherData.current.weather_descriptions[0] : "")} style={{ width: '100px' }} />
+          <div>
+            <div style={{ fontSize: '4rem', fontWeight: '800', lineHeight: '1' }}>{blynkData.V0 || "30"}°</div>
+            <div style={{ fontSize: '1.2rem', color: '#94a3b8', marginTop: '5px' }}>{hasWeather ? weatherData.current.weather_descriptions[0] : "Partly Cloudy"}</div>
+            <div style={{ fontSize: '0.8rem', color: '#71717a', marginTop: '10px' }}>Matara, Sri Lanka</div>
+          </div>
+        </div>
+        
+        <div className="glass stat-card" style={{ textAlign: 'center' }}>
+          <span className="label" style={{ color: '#fbbf24' }}>Tomorrow</span>
+          <img src={getIcon(tomorrowData?.weather_descriptions[0])} style={{ width: '50px', margin: '15px auto' }} />
+          <span className="value">{tomorrowData?.maxtemp || "31"}°</span>
+          <span style={{ fontSize: '0.7rem', color: '#71717a' }}>Mostly Sunny</span>
+        </div>
+      </div>
+
+      {/* MIDDLE: SENSOR HIGHLIGHTS (Horizontal Row) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px', height: '15vh', marginBottom: '20px' }}>
+        <div className="glass stat-card">
+          <span className="label">Humidity</span>
+          <span className="value">{blynkData.V1 || "74"}%</span>
+          <div style={{ height: '4px', background: '#38bdf8', width: '70%', borderRadius: '2px', marginTop: '10px' }}></div>
+        </div>
+        <div className="glass stat-card">
+          <span className="label">Pressure</span>
+          <span className="value">{Math.round(blynkData.V2) || "1010"}</span>
+          <span style={{ fontSize: '0.6rem', color: '#71717a' }}>hPa</span>
+        </div>
+        <div className="glass stat-card">
+          <span className="label">Air Quality</span>
+          <span className="value" style={{ color: '#10b981' }}>{blynkData.V5 || "Excellent"}</span>
+          <span style={{ fontSize: '0.6rem', color: '#71717a' }}>Index Level</span>
+        </div>
+        <div className="glass stat-card">
+          <span className="label">Wind Speed</span>
+          <span className="value">12</span>
+          <span style={{ fontSize: '0.6rem', color: '#71717a' }}>km/h</span>
+        </div>
+      </div>
+
+      {/* BOTTOM: 5-DAY PREDICTIVE (Sleek Vertical/Horizontal Mix) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '15px', height: '20vh' }}>
+        {nextFiveDays.map((day: any, i) => (
+          <div key={i} className="glass" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px' }}>
+            <span style={{ fontSize: '0.7rem', color: '#71717a', marginBottom: '8px' }}>{day.date.split('-').slice(1).join('/')}</span>
+            <img src={getIcon(day.weather_descriptions[0])} style={{ width: '30px', marginBottom: '8px' }} />
+            <span style={{ fontSize: '1.1rem', fontWeight: '700' }}>{day.maxtemp}°</span>
           </div>
         ))}
-      </div>
-
-      {/* MIDDLE: PRIMARY HUB (1.2fr to 0.8fr weighted split) */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '10px', height: '42vh', marginBottom: '10px' }}>
-        {/* CURRENT STATUS */}
-        <div className="glass-card" style={{ borderLeft: '3px solid #38bdf8', padding: '20px', alignItems: 'center' }}>
-          <span className="label" style={{color: '#38bdf8', marginBottom: '15px'}}>Matara Regional</span>
-          <img src={getIcon(hasWeather ? weatherData.current.weather_descriptions[0] : "")} style={{ width: '60px', marginBottom: '15px' }} />
-          <span style={{ fontSize: '1.8rem', fontWeight: '900', textAlign: 'center', letterSpacing: '-0.5px' }}>
-            {hasWeather ? weatherData.current.weather_descriptions[0].toUpperCase() : "SYNCING"}
-          </span>
-        </div>
-
-        {/* PREDICTION */}
-        <div className="glass-card" style={{ borderLeft: '3px solid #fbbf24', padding: '20px' }}>
-          <span className="label" style={{color: '#fbbf24', marginBottom: '15px'}}>Tomorrow</span>
-          <img src={getIcon(tomorrowData ? tomorrowData.weather_descriptions[0] : "")} style={{ width: '50px', marginBottom: '15px' }} />
-          <span style={{ fontSize: '1.4rem', fontWeight: '800', textAlign: 'center' }}>
-             {tomorrowData ? tomorrowData.weather_descriptions[0].toUpperCase() : "ANALYZING"}
-          </span>
-          <span style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '10px' }}>
-            {tomorrowData ? `${tomorrowData.maxtemp}°C Forecast` : "--"}
-          </span>
-        </div>
-      </div>
-
-      {/* BOTTOM: 4-DAY OUTLOOK (CLEAN STRIP) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', height: '22vh' }}>
-        {(hasWeather ? nextFourDays : [1,2,3,4]).map((day: any, i) => {
-          const date = hasWeather ? day.date.split('-').slice(1).join('/') : `04/0${i+2}`;
-          return (
-            <div key={i} className="glass-card" style={{ padding: '8px' }}>
-              <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 'bold', marginBottom: '8px' }}>{date}</span>
-              <img src={getIcon(hasWeather ? day.weather_descriptions[0] : "Clear")} style={{ width: '25px', marginBottom: '8px' }} />
-              <span style={{ fontSize: '1.1rem', fontWeight: '800' }}>{hasWeather ? day.maxtemp : 28 + i}°</span>
-            </div>
-          );
-        })}
       </div>
     </div>
   );
