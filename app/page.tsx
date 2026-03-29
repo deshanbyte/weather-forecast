@@ -1,13 +1,12 @@
 import React from 'react';
 
 const BLYNK_TOKEN = "pM0_GwoRXsJuSq8FARjyv5YEt1SuZW1D";
-const W_KEY = "38bdf8dafc29a88bfb153249f4dbcf29"; // Updated from your earlier key
+const W_KEY = "38bdf8dafc29a88bfb153249f4dbcf29";
 
-export default async function DashboardPro() {
-  // 1. Fetch Live ESP32 Sensor Data (Non-Blocking)
+export default async function EnviroDashboard() {
+  // 1. Fetch Live ESP32 Sensor Data
   const pins = ['V0','V1','V2','V5'];
   const blynkData: any = {};
-  
   await Promise.all(pins.map(async (pin) => {
     try {
       const res = await fetch(`https://blynk.cloud/external/api/get?token=${BLYNK_TOKEN}&${pin}`, { next: { revalidate: 0 } });
@@ -26,104 +25,97 @@ export default async function DashboardPro() {
   const tomorrowData = hasWeather ? Object.values(weatherData.forecast)[1] as any : null;
   const nextFourDays = hasWeather ? Object.values(weatherData.forecast).slice(2, 6) : [];
 
-  // Static Icon Logic matching your visual references
   const getIcon = (desc: string) => {
     const d = desc?.toLowerCase() || "";
     if (d.includes("rain")) return "🌧️";
     if (d.includes("cloud") || d.includes("overcast")) return "☁️";
-    if (d.includes("clear") || d.includes("sun")) return "☀️";
-    return "⛅";
+    return "☀️";
   };
 
   return (
-    <>
-      {/* Import Poppins and set up visual styles */}
-      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet" />
-      <style>{`
-        * { box-sizing: border-box; }
-        body { margin: 0; padding: 0; background-color: #070b14; color: white; font-family: 'Poppins', sans-serif; overflow: hidden; height: 100vh; }
-        .glass-card { background: rgba(30, 41, 59, 0.4); border-radius: 20px; border: 1px solid rgba(56, 189, 248, 0.1); backdrop-filter: blur(10px); }
-        .label { font-size: 0.7rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-        .data-main { font-size: 1.5rem; font-weight: 800; color: #f8fafc; }
-        .main-title { color: #38bdf8; fontSize: 1.3rem; letterSpacing: '4px'; textTransform: 'uppercase'; margin: 0; font-weight: 800;}
-      `}</style>
+    <main style={{ 
+      backgroundColor: '#000000', color: '#ffffff', height: '100vh', width: '100vw',
+      padding: '20px', fontFamily: "'Poppins', sans-serif", display: 'flex', 
+      flexDirection: 'column', gap: '15px', boxSizing: 'border-box', overflow: 'hidden'
+    }}>
+      {/* Styles for Glassmorphism and Poppins */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap');
+        .glass { 
+          background: rgba(255, 255, 255, 0.05); 
+          border: 1px solid rgba(255, 255, 255, 0.1); 
+          border-radius: 24px; 
+          backdrop-filter: blur(25px);
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+        }
+        .text-secondary { color: #8E8E93; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; letter-spacing: 1.2px; }
+        .text-blue { color: #007AFF; }
+        .text-amber { color: #FF9F0A; }
+      `}} />
 
-      {/* Main Container - Mobile locked to 100vh */}
-      <div style={{ display: 'flex', flexDirection: 'column', padding: '15px', height: '100vh', justifyContent: 'center' }}>
-        
-        {/* HEADER */}
-        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '7vh', marginBottom: '10px' }}>
-          <h1 className="main-title">Enviro Hub Pro</h1>
-          <div style={{ fontSize: '0.8rem', color: '#94a3b8', textAlign: 'right' }}>
-            <p style={{ margin: 0, fontWeight: 600 }}>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</p>
-            <p style={{ margin: 0, opacity: 0.8 }}>Matara Local Time</p>
-          </div>
-        </header>
-
-        {/* TOP ROW: Live ESP32 Sensor Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', height: '12vh', marginBottom: '15px' }}>
-          <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', border: '1px solid #38bdf8' }}>
-            <span className="label">Temp</span>
-            <span className="data-main">{blynkData.V0}°C</span>
-          </div>
-          <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-            <span className="label">Humidity</span>
-            <span className="data-main">{blynkData.V1}%</span>
-          </div>
-          <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-            <span className="label">Pressure</span>
-            <span className="data-main">{Math.round(blynkData.V2)}</span>
-            <span style={{ fontSize: '0.6rem', color: '#94a3b8' }}>hPa</span>
-          </div>
-          <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-            <span className="label">Air Quality</span>
-            <span className="data-main" style={{ color: '#10b981' }}>{blynkData.V5}</span>
-            <span style={{ fontSize: '0.6rem', color: '#94a3b8' }}>/100</span>
-          </div>
+      {/* HEADER: Title & Live Clock */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '8vh' }}>
+        <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, letterSpacing: '-0.5px' }} className="text-blue">
+          ENVIRO MONITORING SYSTEM
+        </h1>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+          <div style={{ fontSize: '0.75rem', opacity: 0.6 }}>{new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
         </div>
-
-        {/* MIDDLE ROW: The Matara Now & Tomorrow Hub */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '15px', height: '40vh', marginBottom: '15px' }}>
-          
-          {/* MATARA CURRENTLY - Regional API */}
-          <div className="glass-card" style={{ display: 'flex', alignItems: 'center', gap: '20px', padding: '30px', position: 'relative' }}>
-            <div style={{ fontSize: '5rem' }}>{getIcon(hasWeather ? weatherData.current.weather_descriptions[0] : "")}</div>
-            <div style={{ flex: 1 }}>
-              <span className="label" style={{ color: '#38bdf8', letterSpacing: '2px' }}>Matara Regional</span>
-              <div style={{ fontSize: '2.5rem', fontWeight: '900', color: '#60a5fa', margin: '10px 0', textTransform: 'uppercase' }}>
-                {hasWeather ? weatherData.current.weather_descriptions[0] : "Cloudy"}
-              </div>
-              <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: 0, opacity: 0.8 }}>📡 Satellite Sync Active</p>
-            </div>
-          </div>
-
-          {/* TOMORROW PREDICTION - Edge AI */}
-          <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '20px', border: '1px solid #fbbf24' }}>
-            <span className="label" style={{ color: '#fbbf24', letterSpacing: '2px', marginBottom: '15px' }}>TOMORROW</span>
-            <div style={{ fontSize: '4rem', marginBottom: '15px' }}>{getIcon(tomorrowData ? tomorrowData.weather_descriptions[0] : "")}</div>
-            <div style={{ fontSize: '1.8rem', fontWeight: '800', color: '#f1f5f9', textAlign: 'center' }}>
-               {tomorrowData ? tomorrowData.weather_descriptions[0].toUpperCase() : "ANALYZING"}
-            </div>
-            <p style={{ fontSize: '0.9rem', color: '#64748b', marginTop: '10px' }}>{tomorrowData ? `${tomorrowData.maxtemp}°C Peak` : "Calculated Trend"}</p>
-          </div>
-        </div>
-
-        {/* BOTTOM ROW: 4-Day Predictive Outlook (Compact) */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', height: '22vh' }}>
-          {(hasWeather ? nextFourDays : [1,2,3,4]).map((day: any, i) => {
-            // Format to show only the date (e.g., 03/30)
-            const dateDisplay = hasWeather ? day.date.split('-').slice(1).join('/') : `03/0${i+2}`;
-            return (
-              <div key={i} className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '10px' }}>
-                <p style={{ fontSize: '0.7rem', color: '#38bdf8', margin: '0 0 5px 0', fontWeight: 'bold' }}>{dateDisplay}</p>
-                <div style={{ fontSize: '2rem', marginBottom: '8px' }}>{getIcon(hasWeather ? day.weather_descriptions[0] : "Clear")}</div>
-                <p style={{ fontSize: '1.2rem', fontWeight: '800', margin: 0 }}>{hasWeather ? day.maxtemp : 28 + i}°C</p>
-              </div>
-            );
-          })}
-        </div>
-
       </div>
-    </>
+
+      {/* TOP ROW: ESP32 Live Stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', height: '12vh' }}>
+        {[
+          { label: 'Temp', val: blynkData.V0 + '°C' },
+          { label: 'Humidity', val: blynkData.V1 + '%' },
+          { label: 'Pressure', val: Math.round(blynkData.V2) },
+          { label: 'Air Quality', val: blynkData.V5, color: '#34C759' }
+        ].map((s, i) => (
+          <div key={i} className="glass">
+            <span className="text-secondary">{s.label}</span>
+            <span style={{ fontSize: '1.6rem', fontWeight: 700, color: s.color || '#fff' }}>{s.val}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* MIDDLE HUB: Matara Current & Tomorrow Weighted */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.25fr 0.75fr', gap: '15px', height: '40vh' }}>
+        {/* Matara Status */}
+        <div className="glass" style={{ alignItems: 'flex-start', padding: '0 40px', background: 'linear-gradient(135deg, rgba(0,122,255,0.1) 0%, rgba(0,0,0,0) 100%)' }}>
+          <span className="text-secondary text-blue">Matara Now</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '30px', marginTop: '10px' }}>
+            <span style={{ fontSize: '5.5rem' }}>{getIcon(hasWeather ? weatherData.current.weather_descriptions[0] : "")}</span>
+            <span style={{ fontSize: '3rem', fontWeight: 800, letterSpacing: '-1.5px' }}>
+              {hasWeather ? weatherData.current.weather_descriptions[0].toUpperCase() : "SYNCING"}
+            </span>
+          </div>
+        </div>
+
+        {/* Tomorrow Prediction */}
+        <div className="glass" style={{ border: '1px solid rgba(255, 159, 10, 0.4)' }}>
+          <span className="text-secondary text-amber">Tomorrow</span>
+          <span style={{ fontSize: '4.5rem', margin: '10px 0' }}>{getIcon(tomorrowData?.weather_descriptions[0])}</span>
+          <span style={{ fontSize: '2rem', fontWeight: 800 }}>{tomorrowData?.maxtemp || "--"}°C</span>
+          <span style={{ fontSize: '0.75rem', opacity: 0.5, marginTop: '5px' }}>PREDICTIVE MODEL</span>
+        </div>
+      </div>
+
+      {/* BOTTOM ROW: 4-Day Outlook Tabs */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', height: '23vh' }}>
+        {(hasWeather ? nextFourDays : [1,2,3,4]).map((day: any, i) => (
+          <div key={i} className="glass">
+            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#007AFF', marginBottom: '8px' }}>
+              {hasWeather ? day.date.split('-').slice(1).join('/') : '04/0'+(i+2)}
+            </span>
+            <span style={{ fontSize: '2.8rem', marginBottom: '5px' }}>{getIcon(hasWeather ? day.weather_descriptions[0] : "")}</span>
+            <span style={{ fontSize: '1.4rem', fontWeight: 800 }}>{hasWeather ? day.maxtemp : 28+i}°C</span>
+          </div>
+        ))}
+      </div>
+    </main>
   );
 }
