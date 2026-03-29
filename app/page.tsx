@@ -26,7 +26,6 @@ export default async function WeatherHub() {
   const tomorrowData = hasWeather ? Object.values(weatherData.forecast)[1] as any : null;
   const nextFourDays = hasWeather ? Object.values(weatherData.forecast).slice(2, 6) : [];
 
-  // Icon Logic
   const getIcon = (desc: string) => {
     const d = desc?.toLowerCase() || "";
     if (d.includes("rain")) return "🌧️";
@@ -37,67 +36,67 @@ export default async function WeatherHub() {
 
   return (
     <div style={{ 
-      backgroundColor: '#070b14', color: 'white', height: '100vh', 
-      display: 'flex', flexDirection: 'column', padding: '15px', 
-      fontFamily: 'sans-serif', overflow: 'hidden', boxSizing: 'border-box' 
+      backgroundColor: '#05070a', color: '#e2e8f0', height: '100vh', 
+      display: 'flex', flexDirection: 'column', padding: '20px', 
+      fontFamily: '"Segoe UI", Roboto, Helvetica, Arial, sans-serif', overflow: 'hidden', boxSizing: 'border-box' 
     }}>
       <style>{`
         @font-face { font-family: 'Aboris'; src: url('https://fonts.cdnfonts.com/s/16218/Aboris.woff') format('woff'); }
-        .card { background: rgba(30, 41, 59, 0.4); border-radius: 15px; border: 1px solid rgba(56, 189, 248, 0.15); backdrop-filter: blur(10px); display: flex; flex-direction: column; justify-content: center; }
-        .glow-blue { color: #38bdf8; text-shadow: 0 0 8px rgba(56, 189, 248, 0.4); }
-        .glow-yellow { color: #fbbf24; text-shadow: 0 0 8px rgba(251, 191, 36, 0.4); }
-        @keyframes sunRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .animate-icon { display: inline-block; animation: sunRotate 10s linear infinite; font-size: 1.5rem; }
+        .glass-card { background: rgba(22, 30, 49, 0.7); border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.05); display: flex; flex-direction: column; justify-content: center; align-items: center; transition: all 0.3s ease; }
+        .label-text { font-size: 0.6rem; color: #94a3b8; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6px; }
+        .brand-header { font-family: 'Aboris'; color: #38bdf8; letter-spacing: 5px; font-size: 1.4rem; text-shadow: 0 0 15px rgba(56, 189, 248, 0.3); }
       `}</style>
 
-      {/* HEADER - Reduced for Mobile */}
-      <header style={{ textAlign: 'center', height: '8vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <h1 style={{ fontFamily: 'Aboris', fontSize: 'clamp(1rem, 4vw, 1.8rem)', letterSpacing: '2px', margin: 0 }} className="glow-blue">
-          ENVIRO WEATHER MONITORING
-        </h1>
+      {/* HEADER */}
+      <header style={{ textAlign: 'center', height: '10vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <h1 className="brand-header">ENVIRO MONITORING SYSTEM</h1>
       </header>
 
-      {/* TOP: SENSOR BAR - Compact */}
-      <div className="card" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', padding: '10px', height: '12vh', marginBottom: '10px', border: '1px solid #38bdf8' }}>
-        {[ {l:'TEMP', v:blynkData.V0+'°'}, {l:'HUM', v:blynkData.V1+'%'}, {l:'PRES', v:blynkData.V2}, {l:'AIR', v:blynkData.V5+'/100'} ].map((s, i) => (
-          <div key={i} style={{ textAlign: 'center' }}>
-            <p style={{ fontSize: '0.6rem', color: '#94a3b8', margin: 0 }}>{s.l}</p>
-            <p style={{ fontSize: '1.1rem', fontWeight: 'bold', margin: 0 }}>{s.v}</p>
+      {/* TOP: LIVE SENSOR BAR */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px', height: '12vh', marginBottom: '15px' }}>
+        {[ {l:'Temperature', v:blynkData.V0+'°C'}, {l:'Humidity', v:blynkData.V1+'%'}, {l:'Pressure', v:Math.round(blynkData.V2)}, {l:'Air Quality', v:blynkData.V5, c:'#10b981'} ].map((s, i) => (
+          <div key={i} className="glass-card">
+            <span className="label-text">{s.l}</span>
+            <span style={{ fontSize: '1.5rem', fontWeight: '700', color: s.c || '#f8fafc' }}>{s.v}</span>
           </div>
         ))}
       </div>
 
-      {/* MIDDLE: MAIN HUB - Responsive Split */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', height: '40vh', marginBottom: '10px' }}>
-        {/* CURRENT */}
-        <div className="card" style={{ textAlign: 'center', padding: '10px' }}>
-          <p style={{ fontSize: '0.6rem', color: '#38bdf8', letterSpacing: '1px' }}>MATARA NOW</p>
-          <div className="animate-icon" style={{ margin: '5px 0' }}>{getIcon(hasWeather ? weatherData.current.weather_descriptions[0] : "")}</div>
-          <div style={{ fontSize: 'clamp(1.2rem, 5vw, 2.2rem)', fontWeight: '900', color: '#60a5fa' }}>
-            {hasWeather ? weatherData.current.weather_descriptions[0].toUpperCase() : "CLOUDY"}
+      {/* MIDDLE: PRIMARY DATA HUB */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '15px', height: '43vh', marginBottom: '15px' }}>
+        {/* CURRENT STATUS */}
+        <div className="glass-card" style={{ borderTop: '2px solid #38bdf8', alignItems: 'flex-start', paddingLeft: '40px' }}>
+          <span className="label-text" style={{color: '#38bdf8'}}>Matara Regional Status</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginTop: '10px' }}>
+            <span style={{ fontSize: '4.5rem' }}>{getIcon(hasWeather ? weatherData.current.weather_descriptions[0] : "")}</span>
+            <span style={{ fontSize: '2.8rem', fontWeight: '800', letterSpacing: '-1px' }}>
+              {hasWeather ? weatherData.current.weather_descriptions[0].toUpperCase() : "SYNCING"}
+            </span>
           </div>
         </div>
 
-        {/* TOMORROW */}
-        <div className="card" style={{ textAlign: 'center', padding: '10px', border: '1px solid #fbbf24' }}>
-          <p style={{ fontSize: '0.6rem', color: '#fbbf24', letterSpacing: '1px' }}>TOMORROW</p>
-          <div className="animate-icon" style={{ margin: '5px 0' }}>{getIcon(tomorrowData ? tomorrowData.weather_descriptions[0] : "")}</div>
-          <div style={{ fontSize: 'clamp(1.2rem, 5vw, 2.2rem)', fontWeight: '900' }} className="glow-yellow">
-             {tomorrowData ? tomorrowData.weather_descriptions[0].toUpperCase() : "SUNNY"}
-          </div>
+        {/* PREDICTION */}
+        <div className="glass-card" style={{ borderTop: '2px solid #fbbf24' }}>
+          <span className="label-text" style={{color: '#fbbf24'}}>Tomorrow</span>
+          <span style={{ fontSize: '3.5rem', margin: '15px 0' }}>{getIcon(tomorrowData ? tomorrowData.weather_descriptions[0] : "")}</span>
+          <span style={{ fontSize: '1.8rem', fontWeight: '800' }}>
+             {tomorrowData ? tomorrowData.weather_descriptions[0].toUpperCase() : "ANALYZING"}
+          </span>
+          <span style={{ fontSize: '0.9rem', color: '#64748b', marginTop: '8px' }}>
+            {tomorrowData ? `High of ${tomorrowData.maxtemp}°C` : "Calculating Trend"}
+          </span>
         </div>
       </div>
 
-      {/* BOTTOM: 4-DAY FORECAST - Flexible Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', height: '25vh' }}>
+      {/* BOTTOM: 4-DAY OUTLOOK */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px', height: '20vh' }}>
         {(hasWeather ? nextFourDays : [1,2,3,4]).map((day: any, i) => {
           const date = hasWeather ? day.date.split('-').slice(1).join('/') : `04/0${i+2}`;
-          const desc = hasWeather ? day.weather_descriptions[0] : "Clear";
           return (
-            <div key={i} className="card" style={{ textAlign: 'center', padding: '5px' }}>
-              <p style={{ fontSize: '0.6rem', color: '#38bdf8', margin: '0 0 5px 0' }}>{date}</p>
-              <div style={{ fontSize: '1.2rem', marginBottom: '5px' }}>{getIcon(desc)}</div>
-              <p style={{ fontSize: '1.3rem', fontWeight: 'bold', margin: 0 }}>{hasWeather ? day.maxtemp : 28 + i}°</p>
+            <div key={i} className="glass-card" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+              <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: '700', marginBottom: '8px' }}>{date}</span>
+              <span style={{ fontSize: '1.8rem', marginBottom: '8px' }}>{getIcon(hasWeather ? day.weather_descriptions[0] : "Clear")}</span>
+              <span style={{ fontSize: '1.3rem', fontWeight: '800' }}>{hasWeather ? day.maxtemp : 28 + i}°</span>
             </div>
           );
         })}
